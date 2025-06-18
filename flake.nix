@@ -8,7 +8,6 @@
 
   outputs =
     {
-      self,
       flake-utils,
       nixpkgs,
       ...
@@ -17,7 +16,6 @@
       system:
       let
         pkgs = import nixpkgs { inherit system; };
-        uxn = pkgs.uxn;
       in
       {
         packages = {
@@ -26,11 +24,23 @@
             stdenv.mkDerivation {
               name = "calendar";
 
-              nativeBuildInputs = [
+              nativeBuildInputs = with pkgs; [
                 uxn
               ];
 
-              src = self;
+              src = pkgs.fetchurl {
+                url = "https://wiki.xxiivv.com/etc/calendar.tal.txt";
+                sha256 = "sha256-voPl8ZEYuii6ZkoBpfEujvJMMtgy7U1N4PTSwpzmErU="; # pkgs.lib.fakeSha256;
+              };
+
+              unpackPhase = ''
+                cp $src calendar.tal
+              '';
+
+              patchPhase = ''
+                substituteInPlace calendar.tal \
+                --replace ".theme" "/home/a/.config/uxn/theme"
+              '';
 
               buildPhase = ''
                 uxnasm calendar.tal calendar.rom
